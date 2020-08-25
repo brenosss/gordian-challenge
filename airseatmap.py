@@ -17,12 +17,12 @@ def load_xml(path=f'{DEFAULT_FILE}.xml'):
     return tree.getroot(), namespaces
 
 
-def parser_seat_item(seat, full):
+def parser_seat_item(seat, full, extra_fields):
     x = {'Features': []}
     for item in seat:
         tag_without_ns = item.tag.partition('}')[-1]
         if tag_without_ns == 'Summary':
-            x[tag_without_ns] = include_keys(item.attrib, full)
+            x[tag_without_ns] = include_keys(item.attrib, full, extra_fields)
         elif tag_without_ns == 'Features':
             x[tag_without_ns].append(item.text)
         elif tag_without_ns == 'Status':
@@ -32,7 +32,7 @@ def parser_seat_item(seat, full):
     return x
 
 
-def include_keys(dictionary, full=False, keys=[]):
+def include_keys(dictionary, full=False, extra_fields=[]):
     if full:
         return dictionary
     allowed_keys = [
@@ -44,12 +44,12 @@ def include_keys(dictionary, full=False, keys=[]):
         'Rows',
         'Seats',
     ]
-    allowed_keys.extend(keys)
+    allowed_keys.extend(extra_fields)
     key_set = set(allowed_keys) & set(dictionary.keys())
     return {key: dictionary[key] for key in key_set}
 
 
-def parser_seat_flat(full):
+def parser_seat_flat(full, extra_fields=[]):
     result = []
     root, namespaces = load_xml()
     cabins = root.findall('.//ns:CabinClass', namespaces=namespaces)
@@ -63,14 +63,15 @@ def parser_seat_flat(full):
                         'Layout': cabin.attrib['Layout'],
                         'RowNumber': row.attrib['RowNumber'],
                         'CabinType': row.attrib['CabinType'],
-                        **parser_seat_item(seat, full),
+                        **parser_seat_item(seat, full, extra_fields),
                         **seat.attrib
                     },
-                    full=full
+                    full=full,
+                    extra_fields=extra_fields,
                 ))
     return result
 
-def parser_seat_normalized(full):
+def parser_seat_normalized(full, extra_fields=[]):
     result = []
     root, namespaces = load_xml()
     cabins = root.findall('.//ns:CabinClass', namespaces=namespaces)
@@ -84,10 +85,11 @@ def parser_seat_normalized(full):
                 list_seats.append(
                     include_keys(
                         {
-                            **parser_seat_item(seat, full),
+                            **parser_seat_item(seat, full, extra_fields),
                             **seat.attrib
                         },
-                        full=full
+                        full=full,
+                        extra_fields=extra_fields
                     )
                 )
             list_rows.append(include_keys(
@@ -96,8 +98,9 @@ def parser_seat_normalized(full):
                     'CabinType': row.attrib['CabinType'],
                     'Seats': list_seats
                 },
-                full=full)
-            )
+                full=full,
+                extra_fields=extra_fields
+            ))
         result.append({
             'Layout': cabin.attrib['Layout'],
             'Rows': list_rows
@@ -106,9 +109,9 @@ def parser_seat_normalized(full):
 
 def extract_seats_data(args):
     if args.flat:
-        result = parser_seat_flat(args.full)
+        result = parser_seat_flat(args.full, args.extra_fields)
     else:
-        result = parser_seat_normalized(args.full)
+        result = parser_seat_normalized(args.full, args.extra_fields)
     if args.output_file:
         save_result(result, path=args.output_file)
     else:
@@ -145,6 +148,12 @@ def main():
         nargs='?',
         default=False,
         help='Extract all fields'
+    )
+    parser.add_argument(
+        '--extra-fields',
+        nargs='*',
+        type=str,
+        help='Add extra fields to be extract',
     )
     args = parser.parse_args()
     extract_seats_data(args)
