@@ -155,6 +155,7 @@ def main():
         '--extra-fields',
         nargs='*',
         type=str,
+        default=[],
         help='Add extra fields to be extract, ex [ColumnNumber, ExitRowInd, PlaneSection, Status]'
     )
     args = parser.parse_args()
