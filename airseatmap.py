@@ -49,7 +49,7 @@ def include_keys(dictionary, full=False, keys=[]):
     return {key: dictionary[key] for key in key_set}
 
 
-def parser_seat_planned(full):
+def parser_seat_flat(full):
     result = []
     root, namespaces = load_xml()
     cabins = root.findall('.//ns:CabinClass', namespaces=namespaces)
@@ -105,9 +105,9 @@ def parser_seat_normalized(full):
     return result
 
 def extract_seats_data(args):
-    if args.format == 'planned':
-        result = parser_seat_planned(args.full)
-    elif args.format == 'normalized':
+    if args.flat:
+        result = parser_seat_flat(args.full)
+    else:
         result = parser_seat_normalized(args.full)
     if args.output_file:
         save_result(result, path=args.output_file)
@@ -121,11 +121,11 @@ def extract_seats_data(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--format',
-        type=str,
-        help='Output JSON format',
-        choices=['normalized', 'planned'],
-        default='normalized'
+        "--flat",
+        const=True,
+        nargs='?',
+        default=False,
+        help='Export data in a flat format'
     )
     parser.add_argument(
         '--output-file',
