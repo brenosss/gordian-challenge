@@ -2,9 +2,16 @@ import xml.etree.ElementTree as ET
 import argparse
 import json
 
+DEFAULT_FILE = 'OTA_AirSeatMapRS'
 
-def load_xml(path='OTA_AirSeatMapRS.xml'):
-    tree = ET.parse('OTA_AirSeatMapRS.xml')
+
+def save_result(result, path=f'{DEFAULT_FILE}.json'):
+    with open(path, 'w') as f:
+        f.write(json.dumps(result))
+
+
+def load_xml(path=f'{DEFAULT_FILE}.xml'):
+    tree = ET.parse(path)
     namespaces = {'ns': 'http://www.opentravel.org/OTA/2003/05/common/'}
     return tree.getroot(), namespaces
 
@@ -75,12 +82,21 @@ def main():
         type=str,
         help='Output JSON format',
         choices=['normalized', 'planned'],
-        default='normalized')
+        default='normalized'
+    )
+    parser.add_argument(
+        '--output-file',
+        type=str,
+        help='Output file name',
+    )
     args = parser.parse_args()
     if args.format == 'planned':
         result = parser_seat_planned()
     elif args.format == 'normalized':
         result = parser_seat_normalized()
-
+    if args.output_file:
+        save_result(result, path=args.output_file)
+    else:
+        save_result(result)
 if __name__ == "__main__":
     main()
