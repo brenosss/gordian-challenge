@@ -29,6 +29,7 @@ def parser_seat_item(seat, full, extra_fields):
             x[tag_without_ns] = item.text
         elif tag_without_ns == 'Service':
             x['Price'] = item[0].attrib['Amount']
+            x['CurrencyCode'] = item[0].attrib['CurrencyCode']
     return x
 
 
@@ -43,6 +44,7 @@ def include_keys(dictionary, full=False, extra_fields=[]):
         'AvailableInd',
         'Rows',
         'Seats',
+        'CurrencyCode',
     ]
     allowed_keys.extend(extra_fields)
     key_set = set(allowed_keys) & set(dictionary.keys())
@@ -153,7 +155,7 @@ def main():
         '--extra-fields',
         nargs='*',
         type=str,
-        help='Add extra fields to be extract',
+        help='Add extra fields to be extract, ex [ColumnNumber, ExitRowInd, PlaneSection, Status]'
     )
     args = parser.parse_args()
     extract_seats_data(args)
